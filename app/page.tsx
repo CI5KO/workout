@@ -302,6 +302,11 @@ export default function App() {
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">¡Felicidades!</h1>
           <p className="text-slate-400 mb-6">Has completado tu rutina de hoy</p>
+          <p className="text-slate-400 mb-6">
+            Espero que te haya servido de mucho :D, si requieres mas ayuda me
+            puedes decir.
+          </p>
+          <p className="text-slate-400 mb-6">Te quiere, Hector</p>
           <div className="bg-white/5 rounded-2xl p-6 mb-6 border border-white/10">
             <p className="text-sm text-slate-400 mb-1">
               Ejercicios completados
