@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Flame,
   Dumbbell,
@@ -161,57 +161,67 @@ export default function App() {
   const [showVideo, setShowVideo] = useState(false);
 
   const ex = exercises[currentEx];
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
     if (isRunning && timer > 0) {
-      interval = setInterval(() => setTimer((t) => t - 1), 1000);
-    } else if (timer === 0 && isRunning) {
-      setIsRunning(false);
-      if (phase === "rest") {
-        if (ex.sets && currentSet < ex.sets) {
-          setCurrentSet((s: number) => s + 1);
-          setPhase("exercise");
-          if (ex.type === "hold" || ex.type === "time")
-            setTimer(ex.duration || 0);
-        } else {
-          if (currentEx < exercises.length - 1) {
-            const next = exercises[currentEx + 1];
-            setCurrentEx(currentEx + 1);
-            setCurrentSet(1);
+      timerRef.current = setInterval(() => setTimer((t) => t - 1), 1000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = undefined;
+      }
+      
+      if (timer === 0 && isRunning) {
+        setIsRunning(false);
+        const currentExercise = exercises[currentEx];
+        
+        if (phase === "rest") {
+          if (currentExercise.sets && currentSet < currentExercise.sets) {
+            setCurrentSet((s) => s + 1);
             setPhase("exercise");
-            setShowVideo(false);
-            if (next.type === "hold" || next.type === "time")
-              setTimer(next.duration || 0);
-            else setTimer(0);
-          } else setScreen("complete");
-        }
-      } else if (
-        phase === "exercise" &&
-        (ex.type === "hold" || ex.type === "time")
-      ) {
-        if (ex.rest && ex.sets && currentSet < ex.sets) {
-          setPhase("rest");
-          setTimer(ex.rest);
-          setIsRunning(true);
-        } else if (!ex.sets || currentSet >= ex.sets) {
-          if (currentEx < exercises.length - 1) {
-            const next = exercises[currentEx + 1];
-            setCurrentEx(currentEx + 1);
-            setCurrentSet(1);
-            setPhase("exercise");
-            setShowVideo(false);
-            if (next.type === "hold" || next.type === "time")
-              setTimer(next.duration || 0);
-            else setTimer(0);
-          } else setScreen("complete");
+            if (currentExercise.type === "hold" || currentExercise.type === "time")
+              setTimer(currentExercise.duration || 0);
+          } else {
+            if (currentEx < exercises.length - 1) {
+              const next = exercises[currentEx + 1];
+              setCurrentEx(currentEx + 1);
+              setCurrentSet(1);
+              setPhase("exercise");
+              setShowVideo(false);
+              if (next.type === "hold" || next.type === "time")
+                setTimer(next.duration || 0);
+              else setTimer(0);
+            } else setScreen("complete");
+          }
+        } else if (
+          phase === "exercise" &&
+          (currentExercise.type === "hold" || currentExercise.type === "time")
+        ) {
+          if (currentExercise.rest && currentExercise.sets && currentSet < currentExercise.sets) {
+            setPhase("rest");
+            setTimer(currentExercise.rest);
+            setIsRunning(true);
+          } else if (!currentExercise.sets || currentSet >= currentExercise.sets) {
+            if (currentEx < exercises.length - 1) {
+              const next = exercises[currentEx + 1];
+              setCurrentEx(currentEx + 1);
+              setCurrentSet(1);
+              setPhase("exercise");
+              setShowVideo(false);
+              if (next.type === "hold" || next.type === "time")
+                setTimer(next.duration || 0);
+              else setTimer(0);
+            } else setScreen("complete");
+          }
         }
       }
     }
+    
     return () => {
-      if (interval) clearInterval(interval);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, timer, phase, ex, currentSet, currentEx]);
+  }, [isRunning, timer, phase, currentSet, currentEx]);
 
   const startWorkout = () => {
     setScreen("workout");
