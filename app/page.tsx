@@ -163,7 +163,7 @@ export default function App() {
   const ex = exercises[currentEx];
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout | undefined;
     if (isRunning && timer > 0) {
       interval = setInterval(() => setTimer((t) => t - 1), 1000);
     } else if (timer === 0 && isRunning) {
@@ -174,7 +174,18 @@ export default function App() {
           setPhase("exercise");
           if (ex.type === "hold" || ex.type === "time")
             setTimer(ex.duration || 0);
-        } else nextExercise();
+        } else {
+          if (currentEx < exercises.length - 1) {
+            const next = exercises[currentEx + 1];
+            setCurrentEx(currentEx + 1);
+            setCurrentSet(1);
+            setPhase("exercise");
+            setShowVideo(false);
+            if (next.type === "hold" || next.type === "time")
+              setTimer(next.duration || 0);
+            else setTimer(0);
+          } else setScreen("complete");
+        }
       } else if (
         phase === "exercise" &&
         (ex.type === "hold" || ex.type === "time")
@@ -183,11 +194,24 @@ export default function App() {
           setPhase("rest");
           setTimer(ex.rest);
           setIsRunning(true);
-        } else if (!ex.sets || currentSet >= ex.sets) nextExercise();
+        } else if (!ex.sets || currentSet >= ex.sets) {
+          if (currentEx < exercises.length - 1) {
+            const next = exercises[currentEx + 1];
+            setCurrentEx(currentEx + 1);
+            setCurrentSet(1);
+            setPhase("exercise");
+            setShowVideo(false);
+            if (next.type === "hold" || next.type === "time")
+              setTimer(next.duration || 0);
+            else setTimer(0);
+          } else setScreen("complete");
+        }
       }
     }
-    return () => clearInterval(interval);
-  }, [isRunning, timer, phase, ex, currentSet]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isRunning, timer, phase, ex, currentSet, currentEx]);
 
   const startWorkout = () => {
     setScreen("workout");
